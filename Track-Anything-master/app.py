@@ -21,6 +21,8 @@ try:
 except:
     os.system("mim install mmcv")
 
+# torch.cuda.set_per_process_memory_fraction(0.8, 0)
+
 # download checkpoints
 def download_checkpoint(url, folder, filename):
     os.makedirs(folder, exist_ok=True)
@@ -585,16 +587,16 @@ with gr.Blocks() as iface:
     )
     # set example
     gr.Markdown("##  Examples")
-    gr.Examples(
-        examples=[os.path.join(os.path.dirname(__file__), "./test_sample/", test_sample) for test_sample in ["test-sample8.mp4","test-sample4.mp4", \
-                                                                                                             "test-sample2.mp4","test-sample13.mp4"]],
-        fn=run_example,
-        inputs=[
-            video_input
-        ],
-        outputs=[video_input],
-        # cache_examples=True,
-    ) 
+    # gr.Examples(
+    #     examples=[os.path.join(os.path.dirname(__file__), "./test_sample/", test_sample) for test_sample in ["test-sample8.mp4","test-sample4.mp4", \
+    #                                                                                                          "test-sample2.mp4","test-sample13.mp4"]],
+    #     fn=run_example,
+    #     inputs=[
+    #         video_input
+    #     ],
+    #     outputs=[video_input],
+    #     # cache_examples=True,
+    # ) 
 iface.queue(concurrency_count=1)
-iface.launch(debug=True, enable_queue=True, server_port=args.port, server_name="0.0.0.0")
-# iface.launch(debug=True, enable_queue=True)
+# iface.launch(debug=True, enable_queue=True, server_port=args.port, server_name="0.0.0.0")
+iface.launch(debug=True, enable_queue=True)
