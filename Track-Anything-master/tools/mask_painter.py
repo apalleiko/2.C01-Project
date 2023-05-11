@@ -115,7 +115,6 @@ def vis_add_mask(image, background_mask, contour_mask, background_color, contour
 		
 		image[:, :, i] = image[:, :, i] * (1-contour_alpha+contour_mask*contour_alpha) \
 			+ contour_color[i] * (contour_alpha-contour_mask*contour_alpha)
-
 	return image.astype('uint8')
 
 

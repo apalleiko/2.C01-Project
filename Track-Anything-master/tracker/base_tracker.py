@@ -55,6 +55,8 @@ class BaseTracker:
         return F.interpolate(mask, (int(h/min_hw*self.size), int(w/min_hw*self.size)), 
                     mode='nearest')
 
+
+## TODO: Need to update kinematics tracker through masks
     @torch.no_grad()
     def track(self, frame, first_frame_annotation=None):
         """
@@ -96,13 +98,12 @@ class BaseTracker:
 
         num_objs = final_mask.max()
         painted_image = frame
+
         for obj in range(1, num_objs+1):
             if np.max(final_mask==obj) == 0:
                 continue
             painted_image = mask_painter(painted_image, (final_mask==obj).astype('uint8'), mask_color=obj+1)
-
         # print(f'max memory allocated: {torch.cuda.max_memory_allocated()/(2**20)} MB')
-
         return final_mask, final_mask, painted_image
 
     @torch.no_grad()
@@ -118,6 +119,7 @@ class BaseTracker:
         prompts = {'mask_input': logits}    # 1 256 256
         masks, scores, logits = self.sam_model.predict(prompts, mode, multimask=True)  # masks (n, h, w), scores (n,), logits (n, 256, 256)
         painted_image = mask_painter(frame, masks[np.argmax(scores)].astype('uint8'), mask_alpha=0.8)
+
         painted_image = Image.fromarray(painted_image)
         painted_image.save(f'/ssd1/gaomingqi/refine/{ti:05d}.png')
         self.sam_model.reset_image()

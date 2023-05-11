@@ -21,6 +21,10 @@ try:
 except:
     os.system("mim install mmcv")
 
+from kinematics import kinem
+
+test = kinem(758, 240, 414, 25)
+
 # torch.cuda.set_per_process_memory_fraction(0.8, 0)
 
 # download checkpoints
@@ -187,6 +191,8 @@ def sam_refine(video_state, point_prompt, click_state, interactive_state, evt:gr
     video_state["logits"][video_state["select_frame_number"]] = logit
     video_state["painted_images"][video_state["select_frame_number"]] = painted_image
 
+    test.frame_to_mask_data(video_state['select_frame_number'], mask)
+
     operation_log = [("",""), ("Use SAM for segment. You can try add positive and negative points by clicking. Or press Clear clicks button to refresh the image. Press Add mask button when you are satisfied with the segment","Normal")]
     return painted_image, video_state, interactive_state, operation_log
 
@@ -237,6 +243,8 @@ def vos_tracking_video(video_state, interactive_state, mask_dropdown):
     else:
         following_frames = video_state["origin_images"][video_state["select_frame_number"]:]
 
+
+
     if interactive_state["multi_mask"]["masks"]:
         if len(mask_dropdown) == 0:
             mask_dropdown = ["mask_001"]
@@ -248,6 +256,7 @@ def vos_tracking_video(video_state, interactive_state, mask_dropdown):
         video_state["masks"][video_state["select_frame_number"]]= template_mask
     else:      
         template_mask = video_state["masks"][video_state["select_frame_number"]]
+
     fps = video_state["fps"]
 
     # operation error
@@ -256,6 +265,12 @@ def vos_tracking_video(video_state, interactive_state, mask_dropdown):
         operation_log = [("Error! Please add at least one mask to track by clicking the left image.","Error"), ("","")]
         # return video_output, video_state, interactive_state, operation_error
     masks, logits, painted_images = model.generator(images=following_frames, template_mask=template_mask)
+
+    for i in range(len(masks)-1):
+        test.frame_to_mask_data(i, masks[i])
+
+
+    import pdb; pdb.set_trace()
     # clear GPU memory
     model.xmem.clear_memory()
 
@@ -347,7 +362,7 @@ def generate_video_from_frames(frames, output_path, fps=30):
     frames = torch.from_numpy(np.asarray(frames))
     if not os.path.exists(os.path.dirname(output_path)):
         os.makedirs(os.path.dirname(output_path))
-    torchvision.io.write_video(output_path, frames, fps=fps, video_codec="libx264")
+    torchvision.io.write_video(output_path, frames, fps=int(fps), video_codec="libx264")
     return output_path
 
 
