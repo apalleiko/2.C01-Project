@@ -23,7 +23,7 @@ except:
 
 from kinematics import kinem
 
-test = kinem(758, 240, 414, 25)
+test = kinem(758, 240, 414, 25, 1)
 
 # torch.cuda.set_per_process_memory_fraction(0.8, 0)
 

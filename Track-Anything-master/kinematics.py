@@ -1,16 +1,19 @@
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
+from scipy.signal import butter, lfilter
 
 
 class kinem:
-    def __init__(self, frames, img_x, img_y, length_of_video):
+    def __init__(self, frames, img_x, img_y, length_of_video, frame_rate):
         self.img_x = img_x
         self.img_y = img_y
         self.tot_area = img_x * img_y
         self.frame_to_data = dict()
         self.tot_frames = frames
         self.vid_len = length_of_video
-        self.fps = self.tot_frames / length_of_video
+        self.vid_fps = self.tot_frames / length_of_video
+        self.frame_rate = frame_rate
 
         self.pix_to_known = None
 
@@ -19,7 +22,7 @@ class kinem:
 
     def set_known_distance_golfball(self, pix_dist, known_dist):
         # golf ball diameter known: 4.3 cm or 0.043 m
-        # 180
+        #
         self.pix_to_known = known_dist / pix_dist
 
     def frame_to_mask_data(self, frame, mask):
@@ -51,6 +54,37 @@ class kinem:
         self.vels = []
         for i in range(1, len(self.frame_to_data.keys())-1):
             temp = self.frame_to_data[i][1]
-            self.vels.append(np.array((temp[0] - start[0], temp[1] - start[1]))*self.pix_to_known / self.fps)
+            self.vels.append(np.array(((temp[0] - start[0]), (temp[1] - start[1])))*self.pix_to_known * self.vid_fps)
             start = temp
+        self.frame_rate = 68.8442 / (2 * np.mean(self.vels[0:100]))
+        self.vels = np.array(self.vels) * self.frame_rate
         return self.vels
+
+    def plot_positions(self):
+        fig, ax = plt.subplots()
+        t = range(len(self.frame_to_data.keys())-1)
+        x = [self.frame_to_data[i][1][0] for i in t]
+        print((x[100] - x[0]) * self.pix_to_known * self.frame_rate * self.vid_fps / 100)
+        ax.scatter(t, x)
+        fig.show()
+
+    def plot_vels(self):
+        fig, ax = plt.subplots()
+        n = len(self.vels)
+        t = range(n)
+        v = [i[0] for i in self.vels]
+        ax.scatter(t, v)
+        fig.show()
+
+    def butter_bandpass(self, lowcut, highcut, fs, order=5):
+        nyq = 0.5 * fs
+        low = lowcut / nyq
+        high = highcut / nyq
+        b, a = butter(order, [low, high], btype='band')
+        return b, a
+
+
+    def butter_bandpass_filter(self, data, lowcut, highcut, fs, order=5):
+        b, a = self.butter_bandpass(lowcut, highcut, fs, order=order)
+        y = lfilter(b, a, data)
+        return y
